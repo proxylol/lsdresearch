@@ -106,116 +106,371 @@ local function checkKey(key)
 	return false, keyMessages[status.code] or tostring(status.message)
 end
 
+-- key window, styled to match the hub's UI library (same theme, fonts, rows, pills and tweens)
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local Theme = {
+	Background = Color3.fromRGB(12, 13, 15),
+	Panel = Color3.fromRGB(22, 28, 38),
+	Stroke = Color3.fromRGB(52, 66, 89),
+	Accent = Color3.fromRGB(152, 181, 255),
+	Text = Color3.fromRGB(255, 255, 255),
+	SubText = Color3.fromRGB(180, 180, 180),
+	Error = Color3.fromRGB(255, 125, 125),
+	Success = Color3.fromRGB(140, 220, 160),
+}
+
+local Fonts = {
+	Bold = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.SemiBold),
+	Regular = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Medium),
+}
+
+local function tween(object, duration, goal)
+	local t = TweenService:Create(object, TweenInfo.new(duration, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), goal)
+	t:Play()
+	return t
+end
+
+local function make(className, props, children)
+	local object = Instance.new(className)
+	for key, value in pairs(props) do
+		object[key] = value
+	end
+	for _, child in ipairs(children or {}) do
+		child.Parent = object
+	end
+	return object
+end
+
+local function corner(radius)
+	return make("UICorner", { CornerRadius = UDim.new(0, radius) })
+end
+
+local function stroke(transparency)
+	return make("UIStroke", { Color = Theme.Stroke, Transparency = transparency, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+end
+
+local function padding(top, bottom, left, right)
+	return make("UIPadding", {
+		PaddingTop = UDim.new(0, top),
+		PaddingBottom = UDim.new(0, bottom),
+		PaddingLeft = UDim.new(0, left),
+		PaddingRight = UDim.new(0, right),
+	})
+end
+
+local function text(props)
+	props.BackgroundTransparency = 1
+	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
+	return make("TextLabel", props)
+end
+
+-- the library's standard row: translucent panel, 5px corners, soft stroke
+local function row(order, height)
+	return make("Frame", {
+		LayoutOrder = order,
+		Size = UDim2.new(1, 0, 0, height),
+		BackgroundColor3 = Theme.Panel,
+		BackgroundTransparency = 0.5,
+	}, { corner(5), stroke(0.6), padding(9, 9, 12, 12) })
+end
+
 local function keyWindow(firstMessage)
 	local done = Instance.new("BindableEvent")
 	local acceptedKey
 
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "lsdresearchKey"
-	gui.ResetOnSpawn = false
-	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	local ok = pcall(function()
+	local gui = make("ScreenGui", {
+		Name = "lsdresearchKey",
+		ResetOnSpawn = false,
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+		IgnoreGuiInset = true,
+	})
+	if not pcall(function()
 		gui.Parent = gethui and gethui() or game:GetService("CoreGui")
-	end)
-	if not ok then
+	end) then
 		gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 	end
 
-	local frame = Instance.new("Frame")
-	frame.Size = UDim2.fromOffset(340, 190)
-	frame.Position = UDim2.fromScale(0.5, 0.5)
-	frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	frame.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-	frame.BorderSizePixel = 0
-	frame.Parent = gui
-	Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+	local WIDTH, TOPBAR = 360, 44
 
-	local function label(text, y, size, color)
-		local l = Instance.new("TextLabel")
-		l.BackgroundTransparency = 1
-		l.Size = UDim2.new(1, -32, 0, size + 6)
-		l.Position = UDim2.fromOffset(16, y)
-		l.Font = Enum.Font.GothamMedium
-		l.TextSize = size
-		l.TextColor3 = color
-		l.TextXAlignment = Enum.TextXAlignment.Left
-		l.TextWrapped = true
-		l.Text = text
-		l.Parent = frame
-		return l
+	-- CanvasGroup so the whole window can fade in like the library's does
+	local window = make("CanvasGroup", {
+		Size = UDim2.fromOffset(WIDTH, 260),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		BackgroundColor3 = Theme.Background,
+		BackgroundTransparency = 0.05,
+		GroupTransparency = 1,
+		Parent = gui,
+	}, { corner(10), stroke(0.5) })
+	local scale = make("UIScale", { Scale = 0.95, Parent = window })
+
+	-- title bar
+	local topbar = make("TextButton", {
+		Size = UDim2.new(1, 0, 0, TOPBAR),
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		Parent = window,
+	})
+	local title = text({
+		Position = UDim2.fromOffset(16, 8),
+		Size = UDim2.new(1, -60, 0, 16),
+		FontFace = Fonts.Bold,
+		TextSize = 13,
+		TextColor3 = Theme.Accent,
+		TextTransparency = 0.2,
+		Text = "lsdresearch",
+		Parent = topbar,
+	})
+	make("UIGradient", {
+		Color = ColorSequence.new(Color3.fromRGB(155, 155, 155), Color3.fromRGB(255, 255, 255)),
+		Parent = title,
+	})
+	text({
+		Position = UDim2.fromOffset(16, 24),
+		Size = UDim2.new(1, -60, 0, 12),
+		FontFace = Fonts.Regular,
+		TextSize = 10,
+		TextColor3 = Theme.Text,
+		TextTransparency = 0.6,
+		Text = hub.name,
+		Parent = topbar,
+	})
+
+	-- close button: two crossed bars, like the library's
+	local close = make("TextButton", {
+		Size = UDim2.fromOffset(22, 22),
+		Position = UDim2.new(1, -36, 0.5, -11),
+		BackgroundColor3 = Theme.Panel,
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		Parent = topbar,
+	}, { corner(5) })
+	for _, angle in ipairs({ 45, -45 }) do
+		make("Frame", {
+			Size = UDim2.fromOffset(12, 2),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Rotation = angle,
+			BackgroundColor3 = Theme.Text,
+			BackgroundTransparency = 0.4,
+			Parent = close,
+		})
+	end
+	close.MouseEnter:Connect(function()
+		tween(close, 0.25, { BackgroundTransparency = 0.5 })
+	end)
+	close.MouseLeave:Connect(function()
+		tween(close, 0.25, { BackgroundTransparency = 1 })
+	end)
+
+	make("Frame", {
+		Size = UDim2.new(1, 0, 0, 1),
+		Position = UDim2.fromOffset(0, TOPBAR),
+		BackgroundColor3 = Theme.Stroke,
+		BackgroundTransparency = 0.5,
+		BorderSizePixel = 0,
+		Parent = window,
+	})
+
+	-- body
+	local body = make("Frame", {
+		Position = UDim2.fromOffset(0, TOPBAR + 1),
+		Size = UDim2.new(1, 0, 1, -(TOPBAR + 1)),
+		BackgroundTransparency = 1,
+		Parent = window,
+	}, { padding(12, 14, 14, 14) })
+	local list = make("UIListLayout", {
+		Padding = UDim.new(0, 8),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Parent = body,
+	})
+
+	text({
+		LayoutOrder = 1,
+		Size = UDim2.new(1, 0, 0, 14),
+		FontFace = Fonts.Bold,
+		TextSize = 11,
+		TextColor3 = Theme.Accent,
+		TextTransparency = 0.3,
+		Text = "KEY SYSTEM",
+		Parent = body,
+	})
+
+	-- key box row
+	local boxRow = row(2, 38)
+	boxRow.Parent = body
+	local box = make("TextBox", {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		FontFace = Fonts.Regular,
+		TextSize = 12,
+		TextColor3 = Theme.Text,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		PlaceholderText = "Paste your key here",
+		PlaceholderColor3 = Theme.SubText,
+		ClearTextOnFocus = false,
+		Text = "",
+		Parent = boxRow,
+	})
+	local boxStroke = boxRow:FindFirstChildOfClass("UIStroke")
+	box.Focused:Connect(function()
+		tween(boxStroke, 0.3, { Transparency = 0.2, Color = Theme.Accent })
+	end)
+	box.FocusLost:Connect(function()
+		tween(boxStroke, 0.3, { Transparency = 0.6, Color = Theme.Stroke })
+	end)
+
+	-- a library-style button row: title, description and an accent pill on the right
+	local function actionRow(order, titleText, descText, pillText, onClick)
+		local r = row(order, 46)
+		r.Parent = body
+		local rowTitle = text({
+			Size = UDim2.new(1, -80, 0, 14),
+			FontFace = Fonts.Bold,
+			TextSize = 12,
+			TextColor3 = Theme.Text,
+			TextTransparency = 0.15,
+			Text = titleText,
+			Parent = r,
+		})
+		text({
+			Position = UDim2.fromOffset(0, 15),
+			Size = UDim2.new(1, -80, 0, 12),
+			FontFace = Fonts.Regular,
+			TextSize = 10,
+			TextColor3 = Theme.Accent,
+			TextTransparency = 0.5,
+			Text = descText,
+			Parent = r,
+		})
+		local pill = make("TextLabel", {
+			AutomaticSize = Enum.AutomaticSize.X,
+			Size = UDim2.fromOffset(0, 18),
+			Position = UDim2.new(1, 0, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			BackgroundColor3 = Theme.Accent,
+			BackgroundTransparency = 0.85,
+			FontFace = Fonts.Bold,
+			TextSize = 10,
+			TextColor3 = Theme.Accent,
+			Text = pillText,
+			Parent = r,
+		}, { corner(4), padding(0, 0, 8, 8) })
+		local hit = make("TextButton", {
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			Text = "",
+			Parent = r,
+		})
+		hit.MouseEnter:Connect(function()
+			tween(rowTitle, 0.3, { TextTransparency = 0 })
+			tween(r, 0.3, { BackgroundTransparency = 0.3 })
+		end)
+		hit.MouseLeave:Connect(function()
+			tween(rowTitle, 0.3, { TextTransparency = 0.15 })
+			tween(r, 0.3, { BackgroundTransparency = 0.5 })
+		end)
+		hit.MouseButton1Click:Connect(function()
+			pill.BackgroundTransparency = 0.5
+			tween(pill, 0.4, { BackgroundTransparency = 0.85 })
+			onClick()
+		end)
+		return pill
 	end
 
-	label("lsdresearch", 14, 18, Color3.fromRGB(240, 240, 245))
-	label("Enter your key to load " .. hub.name, 38, 13, Color3.fromRGB(150, 150, 165))
+	-- status line, like the library's paragraph body text
+	local status = text({
+		LayoutOrder = 5,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		FontFace = Fonts.Regular,
+		TextSize = 10,
+		TextWrapped = true,
+		TextColor3 = Theme.Error,
+		Text = firstMessage or "",
+		Parent = body,
+	})
 
-	local box = Instance.new("TextBox")
-	box.Size = UDim2.new(1, -32, 0, 36)
-	box.Position = UDim2.fromOffset(16, 66)
-	box.BackgroundColor3 = Color3.fromRGB(36, 36, 44)
-	box.BorderSizePixel = 0
-	box.Font = Enum.Font.Gotham
-	box.TextSize = 14
-	box.TextColor3 = Color3.fromRGB(235, 235, 240)
-	box.PlaceholderText = "Paste your key here"
-	box.PlaceholderColor3 = Color3.fromRGB(110, 110, 125)
-	box.ClearTextOnFocus = false
-	box.Text = ""
-	box.Parent = frame
-	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
-
-	local status = label(firstMessage or "", 108, 12, Color3.fromRGB(240, 110, 110))
-
-	local function button(text, x, color)
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(0.5, -20, 0, 34)
-		b.Position = UDim2.new(x, x == 0 and 16 or 4, 0, 140)
-		b.BackgroundColor3 = color
-		b.BorderSizePixel = 0
-		b.Font = Enum.Font.GothamMedium
-		b.TextSize = 14
-		b.TextColor3 = Color3.fromRGB(255, 255, 255)
-		b.Text = text
-		b.AutoButtonColor = true
-		b.Parent = frame
-		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-		return b
+	local function setStatus(message, color)
+		status.Text = message
+		status.TextColor3 = color
 	end
 
-	local getKey = button("Get Key", 0, Color3.fromRGB(60, 60, 75))
-	local submit = button("Submit", 0.5, Color3.fromRGB(88, 101, 242))
-
-	getKey.MouseButton1Click:Connect(function()
+	actionRow(3, "Get Key", "Copies the key link, open it in your browser", "Copy", function()
 		if setclipboard then
 			setclipboard(KEY_LINK)
-			status.TextColor3 = Color3.fromRGB(120, 200, 140)
-			status.Text = "Link copied. Open it in your browser to get a key."
+			setStatus("Link copied. Open it in your browser to get a key.", Theme.Success)
 		else
-			status.TextColor3 = Color3.fromRGB(150, 150, 165)
-			status.Text = KEY_LINK
+			setStatus(KEY_LINK, Theme.SubText)
 		end
 	end)
 
 	local checking = false
-	submit.MouseButton1Click:Connect(function()
+	local submitPill
+	submitPill = actionRow(4, "Submit", "Checks your key and loads " .. hub.name, "Check", function()
 		if checking then
 			return
 		end
 		checking = true
+		submitPill.Text = "..."
+		setStatus("Checking...", Theme.SubText)
 		local key = box.Text:gsub("%s", "")
-		status.TextColor3 = Color3.fromRGB(150, 150, 165)
-		status.Text = "Checking..."
 		local valid, message = checkKey(key)
 		if valid then
 			acceptedKey = key
+			setStatus("Key accepted, loading...", Theme.Success)
 			done:Fire()
 		else
-			status.TextColor3 = Color3.fromRGB(240, 110, 110)
-			status.Text = message
+			setStatus(message, Theme.Error)
 		end
+		submitPill.Text = "Check"
 		checking = false
 	end)
 
+	-- fit the window to its contents
+	local function fit()
+		window.Size = UDim2.fromOffset(WIDTH, TOPBAR + 1 + list.AbsoluteContentSize.Y + 26)
+	end
+	list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
+	fit()
+
+	-- drag by the title bar
+	local dragStart, startPos
+	topbar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragStart, startPos = input.Position, window.Position
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragStart and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			window.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragStart = nil
+		end
+	end)
+
+	close.MouseButton1Click:Connect(function()
+		done:Fire()
+	end)
+
+	-- open, like the library's window
+	tween(window, 0.5, { GroupTransparency = 0 })
+	tween(scale, 0.5, { Scale = 1 })
+
 	done.Event:Wait()
+
+	-- close
+	tween(window, 0.3, { GroupTransparency = 1 })
+	tween(scale, 0.3, { Scale = 0.95 }).Completed:Wait()
 	gui:Destroy()
 	done:Destroy()
 	return acceptedKey
@@ -244,6 +499,10 @@ end
 if not key then
 	forgetKey()
 	key = keyWindow(reason)
+	-- closed the window without a key
+	if not key then
+		return
+	end
 end
 
 saveKey(key)
