@@ -74,26 +74,22 @@ local function forgetKey()
 	end)
 end
 
--- Luarmor's key check library tells us why a key is bad without kicking the player
 local keyApi
 do
 	local ok, lib = pcall(function()
 		return loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
 	end)
 	if ok and type(lib) == "table" then
-		-- keys work for every script in the project, so this game's script id is enough to check them
 		lib.script_id = hub.url:match("loaders/(%w+)%.lua")
 		keyApi = lib
 	end
 end
 
--- returns true, or false plus a message for the player
 local function checkKey(key)
 	if type(key) ~= "string" or key == "" then
 		return false, "Paste your key first."
 	end
 	if not keyApi then
-		-- couldn't reach the checker; let Luarmor's own check decide when the script loads
 		return true
 	end
 	local ok, status = pcall(keyApi.check_key, key)
@@ -105,8 +101,6 @@ local function checkKey(key)
 	end
 	return false, keyMessages[status.code] or tostring(status.message)
 end
-
--- key window, styled to match the hub's UI library (same theme, fonts, rows, pills and tweens)
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -167,7 +161,6 @@ local function text(props)
 	return make("TextLabel", props)
 end
 
--- the library's standard row: translucent panel, 5px corners, soft stroke
 local function row(order, height)
 	return make("Frame", {
 		LayoutOrder = order,
@@ -195,7 +188,6 @@ local function keyWindow(firstMessage)
 
 	local WIDTH, TOPBAR = 360, 44
 
-	-- CanvasGroup so the whole window can fade in like the library's does
 	local window = make("CanvasGroup", {
 		Size = UDim2.fromOffset(WIDTH, 260),
 		Position = UDim2.fromScale(0.5, 0.5),
@@ -207,7 +199,6 @@ local function keyWindow(firstMessage)
 	}, { corner(10), stroke(0.5) })
 	local scale = make("UIScale", { Scale = 0.95, Parent = window })
 
-	-- title bar
 	local topbar = make("TextButton", {
 		Size = UDim2.new(1, 0, 0, TOPBAR),
 		BackgroundTransparency = 1,
@@ -240,7 +231,6 @@ local function keyWindow(firstMessage)
 		Parent = topbar,
 	})
 
-	-- close button: two crossed bars, like the library's
 	local close = make("TextButton", {
 		Size = UDim2.fromOffset(22, 22),
 		Position = UDim2.new(1, -36, 0.5, -11),
@@ -277,7 +267,6 @@ local function keyWindow(firstMessage)
 		Parent = window,
 	})
 
-	-- body
 	local body = make("Frame", {
 		Position = UDim2.fromOffset(0, TOPBAR + 1),
 		Size = UDim2.new(1, 0, 1, -(TOPBAR + 1)),
@@ -301,7 +290,6 @@ local function keyWindow(firstMessage)
 		Parent = body,
 	})
 
-	-- key box row
 	local boxRow = row(2, 38)
 	boxRow.Parent = body
 	local box = make("TextBox", {
@@ -325,7 +313,6 @@ local function keyWindow(firstMessage)
 		tween(boxStroke, 0.3, { Transparency = 0.6, Color = Theme.Stroke })
 	end)
 
-	-- a library-style button row: title, description and an accent pill on the right
 	local function actionRow(order, titleText, descText, pillText, onClick)
 		local r = row(order, 46)
 		r.Parent = body
@@ -383,7 +370,6 @@ local function keyWindow(firstMessage)
 		return pill
 	end
 
-	-- status line, like the library's paragraph body text
 	local status = text({
 		LayoutOrder = 5,
 		Size = UDim2.new(1, 0, 0, 0),
@@ -432,14 +418,12 @@ local function keyWindow(firstMessage)
 		checking = false
 	end)
 
-	-- fit the window to its contents
 	local function fit()
 		window.Size = UDim2.fromOffset(WIDTH, TOPBAR + 1 + list.AbsoluteContentSize.Y + 26)
 	end
 	list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
 	fit()
 
-	-- drag by the title bar
 	local dragStart, startPos
 	topbar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -462,13 +446,11 @@ local function keyWindow(firstMessage)
 		done:Fire()
 	end)
 
-	-- open, like the library's window
 	tween(window, 0.5, { GroupTransparency = 0 })
 	tween(scale, 0.5, { Scale = 1 })
 
 	done.Event:Wait()
 
-	-- close
 	tween(window, 0.3, { GroupTransparency = 1 })
 	tween(scale, 0.3, { Scale = 0.95 }).Completed:Wait()
 	gui:Destroy()
@@ -476,7 +458,6 @@ local function keyWindow(firstMessage)
 	return acceptedKey
 end
 
--- a key set above the loadstring wins, then the one saved last time, then we ask
 local candidates = {}
 if type(script_key) == "string" and script_key ~= "" then
 	table.insert(candidates, script_key)
@@ -499,14 +480,12 @@ end
 if not key then
 	forgetKey()
 	key = keyWindow(reason)
-	-- closed the window without a key
 	if not key then
 		return
 	end
 end
 
 saveKey(key)
--- the Luarmor loader reads the key from this global
 local env = getgenv and getgenv() or _G
 env.script_key = key
 script_key = key
