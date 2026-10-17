@@ -1,12 +1,11 @@
--- v3
 local hubs = {
 	[1802741133] = { name = "Cabin Crew Simulator", url = "https://api.luarmor.net/files/v4/loaders/89d5ae806ab22a5d80efbe13b41090ae.lua" },
 	[9898409899] = { name = "K2 Climbing", url = "https://api.luarmor.net/files/v4/loaders/14ab05bb43ff4bcf9d3801b68d6b495e.lua" },
 }
 
 local keyLinks = {
-	{ name = "Lootlabs", tag = "Easy, Short", desc = "1 day key", url = "https://ads.luarmor.net/get_key?for=Lootlabs-osbeSQDHFyMg", logo = "rbxassetid://102357888982176" },
-	{ name = "Lootlabs", desc = "3 day key", url = "https://ads.luarmor.net/get_key?for=Lootlabs_3_Day_Key-jgbBJRiVKsjH", logo = "rbxassetid://102357888982176" },
+	{ name = "1 Day Key", tag = "Easy, Short", desc = "Lootlabs", url = "https://ads.luarmor.net/get_key?for=Lootlabs-osbeSQDHFyMg", logo = "rbxassetid://102357888982176" },
+	{ name = "3 Day Key", desc = "Lootlabs", url = "https://ads.luarmor.net/get_key?for=Lootlabs_3_Day_Key-jgbBJRiVKsjH", logo = "rbxassetid://102357888982176" },
 }
 
 if not game:IsLoaded() then
