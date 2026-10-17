@@ -88,8 +88,8 @@ local grey = Color3.fromRGB(180, 180, 180)
 local red = Color3.fromRGB(255, 125, 125)
 local green = Color3.fromRGB(140, 220, 160)
 
-local bold = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.SemiBold)
-local medium = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Medium)
+local bold = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
+local medium = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Medium)
 
 local function tween(obj, t, props)
 	local tw = TweenService:Create(obj, TweenInfo.new(t, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props)
@@ -144,16 +144,140 @@ local function askForKey(firstMsg)
 
 	local width = 360
 
-	local main = new("CanvasGroup", {
-		Size = UDim2.fromOffset(width, 260),
+	local holder = new("Frame", {
+		Size = UDim2.fromOffset(width, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
+		BackgroundTransparency = 1,
+		Parent = gui,
+	}, { new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+	local scale = new("UIScale", { Scale = 0.95, Parent = holder })
+
+	local main = new("CanvasGroup", {
+		LayoutOrder = 1,
+		Size = UDim2.fromOffset(width, 260),
 		BackgroundColor3 = bg,
 		BackgroundTransparency = 0.05,
 		GroupTransparency = 1,
-		Parent = gui,
+		Parent = holder,
 	}, { round(10), border(0.5) })
-	local scale = new("UIScale", { Scale = 0.95, Parent = main })
+
+	local discordLink = "https://discord.com/invite/tEjxBqkK88"
+	local orange = Color3.fromRGB(255, 184, 77)
+
+	local discord = new("CanvasGroup", {
+		LayoutOrder = 2,
+		Size = UDim2.fromOffset(width, 58),
+		BackgroundColor3 = bg,
+		BackgroundTransparency = 0.05,
+		GroupTransparency = 1,
+		Parent = holder,
+	}, { round(10), border(0.5), pad(0, 0, 14, 14) })
+
+	new("ImageLabel", {
+		Size = UDim2.fromOffset(30, 30),
+		Position = UDim2.new(0, 0, 0.5, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://18505728201",
+		ScaleType = Enum.ScaleType.Fit,
+		Parent = discord,
+	})
+	local titleLine = new("Frame", {
+		Position = UDim2.new(0, 42, 0.5, -14),
+		Size = UDim2.new(1, -110, 0, 14),
+		BackgroundTransparency = 1,
+		Parent = discord,
+	}, {
+		new("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal,
+			VerticalAlignment = Enum.VerticalAlignment.Center,
+			Padding = UDim.new(0, 5),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+		}),
+	})
+	local discordTitle = label({
+		LayoutOrder = 1,
+		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromOffset(0, 14),
+		FontFace = bold,
+		TextSize = 14,
+		TextColor3 = white,
+		TextTransparency = 0.15,
+		Text = "Join our Discord",
+		Parent = titleLine,
+	})
+	label({
+		LayoutOrder = 2,
+		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromOffset(0, 14),
+		FontFace = bold,
+		TextSize = 12,
+		TextColor3 = white,
+		TextTransparency = 0.6,
+		Text = "·",
+		Parent = titleLine,
+	})
+	label({
+		LayoutOrder = 3,
+		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromOffset(0, 14),
+		FontFace = bold,
+		TextSize = 12,
+		TextColor3 = orange,
+		Text = "Premium Lifetime Keys",
+		Parent = titleLine,
+	})
+	label({
+		Position = UDim2.new(0, 42, 0.5, 2),
+		Size = UDim2.new(1, -120, 0, 12),
+		FontFace = medium,
+		TextSize = 12,
+		TextColor3 = accent,
+		TextTransparency = 0.5,
+		Text = "Updates, support and help with keys",
+		Parent = discord,
+	})
+	local discordPill = new("TextLabel", {
+		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromOffset(0, 18),
+		Position = UDim2.new(1, 0, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		BackgroundColor3 = accent,
+		BackgroundTransparency = 0.85,
+		FontFace = bold,
+		TextSize = 12,
+		TextColor3 = accent,
+		Text = "Copy",
+		Parent = discord,
+	}, { round(4), pad(0, 0, 8, 8) })
+
+	local discordClick = new("TextButton", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "", Parent = discord })
+	discordClick.MouseEnter:Connect(function()
+		tween(discordTitle, 0.3, { TextTransparency = 0 })
+	end)
+	discordClick.MouseLeave:Connect(function()
+		tween(discordTitle, 0.3, { TextTransparency = 0.15 })
+	end)
+	local copiedAt = 0
+	discordClick.MouseButton1Click:Connect(function()
+		discordPill.BackgroundTransparency = 0.5
+		tween(discordPill, 0.4, { BackgroundTransparency = 0.85 })
+		if setclipboard then
+			setclipboard(discordLink)
+			discordPill.Text = "Copied!"
+		else
+			discordPill.Text = "discord.gg/tEjxBqkK88"
+		end
+		local now = os.clock()
+		copiedAt = now
+		task.delay(2, function()
+			if copiedAt == now then
+				discordPill.Text = "Copy"
+			end
+		end)
+	end)
 
 	local top = new("TextButton", {
 		Size = UDim2.new(1, 0, 0, 44),
@@ -167,7 +291,7 @@ local function askForKey(firstMsg)
 		Position = UDim2.fromOffset(16, 8),
 		Size = UDim2.new(1, -60, 0, 16),
 		FontFace = bold,
-		TextSize = 13,
+		TextSize = 15,
 		TextColor3 = accent,
 		TextTransparency = 0.2,
 		Text = "lsdresearch",
@@ -179,7 +303,7 @@ local function askForKey(firstMsg)
 		Position = UDim2.fromOffset(16, 24),
 		Size = UDim2.new(1, -60, 0, 12),
 		FontFace = medium,
-		TextSize = 10,
+		TextSize = 12,
 		TextColor3 = white,
 		TextTransparency = 0.6,
 		Text = hub.name,
@@ -247,7 +371,7 @@ local function askForKey(firstMsg)
 		LayoutOrder = 1,
 		Size = UDim2.new(1, 0, 0, 14),
 		FontFace = bold,
-		TextSize = 11,
+		TextSize = 13,
 		TextColor3 = accent,
 		TextTransparency = 0.3,
 		Text = "KEY SYSTEM",
@@ -259,7 +383,7 @@ local function askForKey(firstMsg)
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		FontFace = medium,
-		TextSize = 12,
+		TextSize = 14,
 		TextColor3 = white,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		PlaceholderText = "Paste your key here",
@@ -281,7 +405,7 @@ local function askForKey(firstMsg)
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		FontFace = medium,
-		TextSize = 10,
+		TextSize = 12,
 		TextWrapped = true,
 		TextColor3 = red,
 		Text = firstMsg or "",
@@ -327,7 +451,7 @@ local function askForKey(firstMsg)
 			AutomaticSize = Enum.AutomaticSize.X,
 			Size = UDim2.fromOffset(0, 14),
 			FontFace = bold,
-			TextSize = 12,
+			TextSize = 14,
 			TextColor3 = white,
 			TextTransparency = 0.15,
 			Text = name,
@@ -339,7 +463,7 @@ local function askForKey(firstMsg)
 				AutomaticSize = Enum.AutomaticSize.X,
 				Size = UDim2.fromOffset(0, 14),
 				FontFace = bold,
-				TextSize = 10,
+				TextSize = 12,
 				TextColor3 = green,
 				Text = tag,
 				Parent = line,
@@ -350,7 +474,7 @@ local function askForKey(firstMsg)
 			Position = UDim2.fromOffset(x, 15),
 			Size = UDim2.new(1, -80 - x, 0, 12),
 			FontFace = medium,
-			TextSize = 10,
+			TextSize = 12,
 			TextColor3 = accent,
 			TextTransparency = 0.5,
 			Text = desc,
@@ -365,7 +489,7 @@ local function askForKey(firstMsg)
 			BackgroundColor3 = accent,
 			BackgroundTransparency = 0.85,
 			FontFace = bold,
-			TextSize = 10,
+			TextSize = 12,
 			TextColor3 = accent,
 			Text = action,
 			Parent = b,
@@ -430,13 +554,13 @@ local function askForKey(firstMsg)
 	local dragging, dragFrom, startPos
 	top.InputBegan:Connect(function(i)
 		if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-			dragging, dragFrom, startPos = true, i.Position, main.Position
+			dragging, dragFrom, startPos = true, i.Position, holder.Position
 		end
 	end)
 	UIS.InputChanged:Connect(function(i)
 		if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
 			local d = i.Position - dragFrom
-			main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+			holder.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
 		end
 	end)
 	UIS.InputEnded:Connect(function(i)
@@ -446,11 +570,13 @@ local function askForKey(firstMsg)
 	end)
 
 	tween(main, 0.5, { GroupTransparency = 0 })
+	tween(discord, 0.5, { GroupTransparency = 0 })
 	tween(scale, 0.5, { Scale = 1 })
 
 	done.Event:Wait()
 
 	tween(main, 0.3, { GroupTransparency = 1 })
+	tween(discord, 0.3, { GroupTransparency = 1 })
 	tween(scale, 0.3, { Scale = 0.95 }).Completed:Wait()
 	gui:Destroy()
 	done:Destroy()
