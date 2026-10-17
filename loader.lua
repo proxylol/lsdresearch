@@ -1,12 +1,12 @@
--- v2
+-- v3
 local hubs = {
 	[1802741133] = { name = "Cabin Crew Simulator", url = "https://api.luarmor.net/files/v4/loaders/89d5ae806ab22a5d80efbe13b41090ae.lua" },
 	[9898409899] = { name = "K2 Climbing", url = "https://api.luarmor.net/files/v4/loaders/14ab05bb43ff4bcf9d3801b68d6b495e.lua" },
 }
 
 local keyLinks = {
-	{ name = "Lootlabs", tag = "Recommended", url = "https://ads.luarmor.net/get_key?for=Lootlabs-osbeSQDHFyMg", logo = "rbxassetid://102357888982176" },
-	{ name = "Work.ink", url = "https://ads.luarmor.net/get_key?for=Workink-EbOASIcGCvwd", logo = "rbxassetid://100851789389252" },
+	{ name = "Lootlabs", tag = "Easy, Short", desc = "1 day key", url = "https://ads.luarmor.net/get_key?for=Lootlabs-osbeSQDHFyMg", logo = "rbxassetid://102357888982176" },
+	{ name = "Lootlabs", desc = "3 day key", url = "https://ads.luarmor.net/get_key?for=Lootlabs_3_Day_Key-jgbBJRiVKsjH", logo = "rbxassetid://102357888982176" },
 }
 
 if not game:IsLoaded() then
@@ -389,10 +389,10 @@ local function askForKey(firstMsg)
 	end
 
 	for i, link in ipairs(keyLinks) do
-		button(2 + i, link.name, "Get a key through " .. link.name, "Copy", link.logo, link.tag, function()
+		button(2 + i, link.name, link.desc, "Copy", link.logo, link.tag, function()
 			if setclipboard then
 				setclipboard(link.url)
-				setStatus(link.name .. " link copied. Open it in your browser to get a key.", green)
+				setStatus(link.desc .. " link copied. Open it in your browser to get a key.", green)
 			else
 				setStatus(link.url, grey)
 			end
